@@ -5,8 +5,11 @@
 🌐 **Live Demo:**  
 👉 https://naveenkshijo.github.io/Santa_app/
 
-<img width="1854" height="836" alt="image" src="https://github.com/user-attachments/assets/ef3deb85-d470-472c-8f21-f34626823eb3" />
-<img width="1799" height="476" alt="image" src="https://github.com/user-attachments/assets/c4cca6a6-6491-4772-97c0-c250aa857e02" />
+<img width="1874" height="903" alt="image" src="https://github.com/user-attachments/assets/c9317cc6-114f-470a-a46d-db80369a17a0" />
+<img width="1855" height="842" alt="image" src="https://github.com/user-attachments/assets/007cfdcb-1704-4720-b4d0-9f248f148de7" />
+<img width="1844" height="910" alt="image" src="https://github.com/user-attachments/assets/819779db-ff07-4380-89a4-3024b6661c14" />
+
+
 
 ---
 
