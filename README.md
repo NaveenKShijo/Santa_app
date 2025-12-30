@@ -5,6 +5,9 @@
 🌐 **Live Demo:**  
 👉 https://naveenkshijo.github.io/Santa_app/
 
+<img width="1854" height="836" alt="image" src="https://github.com/user-attachments/assets/ef3deb85-d470-472c-8f21-f34626823eb3" />
+<img width="1799" height="476" alt="image" src="https://github.com/user-attachments/assets/c4cca6a6-6491-4772-97c0-c250aa857e02" />
+
 ---
 
 ## 🧑‍🎄 Project Overview
