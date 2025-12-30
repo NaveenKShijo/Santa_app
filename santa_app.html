@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santa Letters processing & Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-red-50 to-green-50 min-h-screen">
+    <div id="app" class="p-8 max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-5xl font-bold text-red-600 mb-2">✨ Santa's Command Center ✨</h1>
+            <p class="text-gray-600 text-lg">AI-powered letter processing with real-time elf delivery tracking! 🎅</p>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="flex justify-center gap-4 mb-6">
+            <button onclick="switchView('processor')" id="btn-processor" class="px-6 py-3 rounded-lg font-bold bg-red-600 text-white shadow-lg">
+                📧 Letter Processor
+            </button>
+            <button onclick="switchView('map')" id="btn-map" class="px-6 py-3 rounded-lg font-bold bg-white text-gray-700 hover:bg-gray-100">
+                🗺️ Delivery Map
+            </button>
+        </div>
+
+        <!-- Processor View -->
+        <div id="processor-view">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Gmail Inbox -->
+                <div class="bg-white rounded-lg shadow-xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">📥 Gmail Inbox</h2>
+                        <button onclick="loadEmails()" id="load-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
+                            🔄 Load Emails
+                        </button>
+                    </div>
+                    <div id="email-list" class="space-y-3 max-h-96 overflow-y-auto">
+                        <div class="text-center py-8 text-gray-500">
+                            <p class="text-4xl mb-3">✉️</p>
+                            <p>Click "Load Emails" to import letters from Santa's mailbox</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Letter Processor -->
+                <div class="bg-white rounded-lg shadow-xl p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">🎁 Letter Processor</h2>
+                    <div id="drop-zone" class="border-4 border-dashed border-gray-300 rounded-lg p-6 mb-4 hover:border-red-400 hover:bg-red-50 transition-colors">
+                        <div class="text-center text-gray-600 mb-4">
+                            <p class="text-3xl mb-2">✨</p>
+                            <p class="font-semibold">Drag & Drop emails here</p>
+                            <p class="text-sm">or paste a letter below</p>
+                        </div>
+                        <textarea 
+                            id="letter-input" 
+                            placeholder="Paste a letter here and I'll extract:&#10;• Child's name&#10;• Their location (city, country)&#10;• All the gifts they want!&#10;&#10;Example:&#10;Dear Santa, My name is Emily from New York. I'd love a bicycle, art supplies, and books!"
+                            class="w-full h-32 p-4 border-2 border-gray-300 rounded-lg focus:border-red-500 focus:outline-none resize-none"
+                        ></textarea>
+                    </div>
+                    <div id="error-msg" class="hidden mb-3 p-3 bg-red-100 border border-red-300 rounded text-red-700 text-sm"></div>
+                    <button onclick="processLetter()" id="process-btn" class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg">
+                        🎁 Process Letter with AI
+                    </button>
+                </div>
+            </div>
+
+            <!-- Elf Status -->
+            <div class="bg-white rounded-lg shadow-xl p-6 mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">🧝 Elf Team Status</h2>
+                <div id="elf-status" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div>
+            </div>
+
+            <!-- Results Table -->
+            <div id="results-section" class="hidden bg-white rounded-lg shadow-xl p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800">📋 Nice List (<span id="child-count">0</span>)</h2>
+                    <button onclick="clearAll()" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded">
+                        🗑️ Clear All
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-red-100 border-b-2 border-red-300">
+                                <th class="p-3 text-left font-bold">Name</th>
+                                <th class="p-3 text-left font-bold">Location</th>
+                                <th class="p-3 text-left font-bold">Gifts</th>
+                                <th class="p-3 text-left font-bold">Assigned Elf</th>
+                                <th class="p-3 text-left font-bold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map View -->
+        <div id="map-view" class="hidden bg-white rounded-lg shadow-xl p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">🗺️ Live Delivery Tracking</h2>
+            <svg id="delivery-map" class="w-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg" viewBox="-180 -90 360 180" style="height: 600px;"></svg>
+            <div class="mt-4 flex flex-wrap gap-4 justify-center text-sm">
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                    <span>Available</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+                    <span>En Route</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 bg-purple-500 rounded-full"></div>
+                    <span>Delivered</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let children = [];
+        let elves = [
+            {id: 1, name: 'Jingles', status: 'available', lat: 90, lng: 0, targetLat: null, targetLng: null, child: null},
+            {id: 2, name: 'Sparkle', status: 'available', lat: 90, lng: 0, targetLat: null, targetLng: null, child: null},
+            {id: 3, name: 'Buddy', status: 'available', lat: 90, lng: 0, targetLat: null, targetLng: null, child: null},
+            {id: 4, name: 'Twinkle', status: 'available', lat: 90, lng: 0, targetLat: null, targetLng: null, child: null},
+            {id: 5, name: 'Jolly', status: 'available', lat: 90, lng: 0, targetLat: null, targetLng: null, child: null}
+        ];
+        let emails = [];
+        let currentView = 'processor';
+
+        const locations = {
+            'New York': {lat: 40.7, lng: -74}, 'Chicago': {lat: 41.8, lng: -87.6},
+            'London': {lat: 51.5, lng: -0.1}, 'Tokyo': {lat: 35.6, lng: 139.6},
+            'Paris': {lat: 48.8, lng: 2.3}, 'Sydney': {lat: -33.8, lng: 151.2},
+            'Toronto': {lat: 43.6, lng: -79.3}, 'Los Angeles': {lat: 34, lng: -118.2}
+        };
+
+        function switchView(view) {
+            currentView = view;
+            document.getElementById('processor-view').classList.toggle('hidden', view !== 'processor');
+            document.getElementById('map-view').classList.toggle('hidden', view !== 'map');
+            document.getElementById('btn-processor').className = view === 'processor' 
+                ? 'px-6 py-3 rounded-lg font-bold bg-red-600 text-white shadow-lg'
+                : 'px-6 py-3 rounded-lg font-bold bg-white text-gray-700 hover:bg-gray-100';
+            document.getElementById('btn-map').className = view === 'map' 
+                ? 'px-6 py-3 rounded-lg font-bold bg-red-600 text-white shadow-lg'
+                : 'px-6 py-3 rounded-lg font-bold bg-white text-gray-700 hover:bg-gray-100';
+            if (view === 'map') updateMap();
+        }
+
+        function loadEmails() {
+            emails = [
+                {id: '1', from: 'emily@northpole.com', subject: 'Letter to Santa from Emily',
+                 snippet: 'Dear Santa, My name is Emily and I live in New York...',
+                 body: 'Dear Santa,\n\nMy name is Emily and I live in New York. I have been very good this year! For Christmas, I would love a new bicycle, some art supplies, and a puppy.\n\nThank you!\nEmily'},
+                {id: '2', from: 'timmy@northpole.com', subject: 'Christmas Wishes from Timmy',
+                 snippet: 'Dear Santa, My name is Timmy and I live in Chicago...',
+                 body: 'Dear Santa,\n\nMy name is Timmy and I live in Chicago. This year I would really love a LEGO set, a new soccer ball, and some books about dinosaurs.\n\nThank you!\nTimmy'},
+                {id: '3', from: 'sophia@northpole.com', subject: 'From Sophia - Christmas List',
+                 snippet: 'Hi Santa! I\'m Sophia from London...',
+                 body: 'Hi Santa!\n\nI\'m Sophia from London, England. I would love a telescope to look at stars, a science kit, and a new teddy bear.\n\nLove,\nSophia'}
+            ];
+            renderEmails();
+        }
+
+        function renderEmails() {
+            const list = document.getElementById('email-list');
+            list.innerHTML = emails.map(e => `
+                <div draggable="true" ondragstart="dragStart(event, '${e.id}')" 
+                     class="border-2 border-gray-200 rounded-lg p-4 cursor-move hover:border-red-400 hover:bg-red-50">
+                    <div class="font-semibold text-gray-800">${e.subject}</div>
+                    <div class="text-sm text-gray-500">From: ${e.from}</div>
+                    <div class="text-sm text-gray-600 mt-1 line-clamp-2">${e.snippet}</div>
+                </div>
+            `).join('');
+        }
+
+        function dragStart(e, id) {
+            e.dataTransfer.setData('emailId', id);
+        }
+
+        document.getElementById('drop-zone').addEventListener('dragover', e => e.preventDefault());
+        document.getElementById('drop-zone').addEventListener('drop', e => {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('emailId');
+            const email = emails.find(em => em.id === id);
+            if (email) {
+                document.getElementById('letter-input').value = email.body;
+                processLetter();
+            }
+        });
+
+        async function processLetter() {
+            const text = document.getElementById('letter-input').value.trim();
+            if (!text) {
+                showError('Please paste a letter first!');
+                return;
+            }
+
+            const btn = document.getElementById('process-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Processing with AI...';
+            hideError();
+
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1000,
+                        messages: [{
+                            role: 'user',
+                            content: `Extract child info from this letter. Return ONLY valid JSON array, no markdown:\n[{"name":"child's name","location":"city, country","gifts":["gift1","gift2"]}]\n\nLetter:\n${text}`
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                if (data.content && data.content[0]) {
+                    const json = data.content[0].text.replace(/```json|```/g, '').trim();
+                    const newKids = JSON.parse(json);
+                    newKids.forEach(kid => {
+                        kid.elf = null;
+                        kid.status = 'pending';
+                        children.push(kid);
+                        assignElf(kid);
+                    });
+                    document.getElementById('letter-input').value = '';
+                    renderResults();
+                }
+            } catch (err) {
+                showError('Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🎁 Process Letter with AI';
+            }
+        }
+
+        function assignElf(kid) {
+            const elf = elves.find(e => e.status === 'available');
+            if (!elf) {
+                showError('No elves available!');
+                return;
+            }
+
+            let coords = {lat: 0, lng: 0};
+            for (const [city, c] of Object.entries(locations)) {
+                if (kid.location.includes(city)) {
+                    coords = c;
+                    break;
+                }
+            }
+
+            elf.status = 'delivering';
+            elf.targetLat = coords.lat;
+            elf.targetLng = coords.lng;
+            elf.child = kid.name;
+            kid.elf = elf.name;
+            kid.status = 'in-progress';
+            renderElves();
+        }
+
+        function renderElves() {
+            document.getElementById('elf-status').innerHTML = elves.map(e => `
+                <div class="border-2 rounded-lg p-4 text-center">
+                    <div class="text-2xl mb-2">🧝</div>
+                    <div class="font-bold">${e.name}</div>
+                    <div class="text-sm mt-1 font-semibold ${e.status === 'available' ? 'text-green-600' : e.status === 'delivering' ? 'text-blue-600' : 'text-purple-600'}">
+                        ${e.status === 'available' ? '✓ Available' : e.status === 'delivering' ? '→ Delivering' : '✓ Delivered'}
+                    </div>
+                    ${e.child ? `<div class="text-xs text-gray-600 mt-1">To: ${e.child}</div>` : ''}
+                    ${e.status === 'delivered' ? `<button onclick="returnElf(${e.id})" class="mt-2 text-xs bg-green-600 text-white px-2 py-1 rounded">Return Home</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function returnElf(id) {
+            const elf = elves.find(e => e.id === id);
+            elf.status = 'available';
+            elf.lat = 90;
+            elf.lng = 0;
+            elf.targetLat = null;
+            elf.targetLng = null;
+            elf.child = null;
+            renderElves();
+        }
+
+        function renderResults() {
+            document.getElementById('results-section').classList.remove('hidden');
+            document.getElementById('child-count').textContent = children.length;
+            document.getElementById('results-body').innerHTML = children.map((c, i) => `
+                <tr class="border-b hover:bg-green-50">
+                    <td class="p-3 font-semibold">${c.name}</td>
+                    <td class="p-3">${c.location}</td>
+                    <td class="p-3 text-sm">${c.gifts.join(', ')}</td>
+                    <td class="p-3">
+                        ${c.elf ? `<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">${c.elf}</span>` : '<span class="text-gray-400 text-sm">Pending...</span>'}
+                    </td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded text-sm font-semibold ${c.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : c.status === 'in-progress' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
+                            ${c.status}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function clearAll() {
+            children = [];
+            elves.forEach(e => {
+                e.status = 'available';
+                e.lat = 90;
+                e.lng = 0;
+                e.targetLat = null;
+                e.targetLng = null;
+                e.child = null;
+            });
+            document.getElementById('results-section').classList.add('hidden');
+            renderElves();
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error-msg');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('error-msg').classList.add('hidden');
+        }
+
+        function updateMap() {
+            const svg = document.getElementById('delivery-map');
+            let html = '<path d="M -100 30 Q -80 20 -60 25 L -40 30 L -30 20 L -20 30 L -10 25 L 0 30 L 10 25 L 20 30 L 30 25 L 40 30 Z" fill="#90EE90" opacity="0.3"/>';
+            html += '<circle cx="0" cy="-85" r="3" fill="#FF0000"/><text x="0" y="-88" text-anchor="middle" fill="#FF0000" font-size="4" font-weight="bold">🎅 North Pole</text>';
+            
+            elves.forEach(e => {
+                const x = e.lng * 2;
+                const y = -e.lat;
+                const color = e.status === 'available' ? '#10B981' : e.status === 'delivering' ? '#3B82F6' : '#9333EA';
+                
+                if (e.targetLat && e.targetLng) {
+                    html += `<line x1="${x}" y1="${y}" x2="${e.targetLng * 2}" y2="${-e.targetLat}" stroke="${color}" stroke-width="0.5" stroke-dasharray="2,2"/>`;
+                    html += `<circle cx="${e.targetLng * 2}" cy="${-e.targetLat}" r="2" fill="#EF4444" opacity="0.7"/>`;
+                }
+                html += `<circle cx="${x}" cy="${y}" r="2" fill="${color}"/>`;
+                html += `<text x="${x}" y="${y - 3}" text-anchor="middle" font-size="3">🧝</text>`;
+                html += `<text x="${x}" y="${y + 6}" text-anchor="middle" font-size="2.5">${e.name}</text>`;
+            });
+            
+            svg.innerHTML = html;
+        }
+
+        setInterval(() => {
+            elves.forEach(e => {
+                if (e.status === 'delivering' && e.targetLat && e.targetLng) {
+                    const dx = e.targetLat - e.lat;
+                    const dy = e.targetLng - e.lng;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 1) {
+                        e.status = 'delivered';
+                        e.lat = e.targetLat;
+                        e.lng = e.targetLng;
+                    } else {
+                        e.lat += dx * 0.05;
+                        e.lng += dy * 0.05;
+                    }
+                }
+            });
+            renderElves();
+            if (currentView === 'map') updateMap();
+        }, 100);
+
+        renderElves();
+    </script>
+</body>
+</html>
